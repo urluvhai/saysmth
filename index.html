@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اسألني | Ask Me</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4267B2;
+            --primary-light: #5c7ccd;
+            --secondary: #f8f9fa;
+            --accent: #e3f2fd;
+            --text: #2c3e50;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .app-header {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .app-title {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .app-description {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .question-input {
+            width: 100%;
+            padding: 1.5rem;
+            font-size: 1.4rem;
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .question-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 2px 15px rgba(66, 103, 178, 0.15);
+        }
+
+        .answers-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .answer-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            animation: slideIn 0.5s ease-out;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .answer-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+        .answer-content {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .answer-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--accent);
+        }
+
+        .answer-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .answer-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn i {
+            font-size: 1.1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 103, 178, 0.2);
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background: #d4e9fc;
+            transform: translateY(-2px);
+        }
+
+        .input-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 2px 15px rgba(66, 103, 178, 0.15);
+        }
+
+        .char-count {
+            text-align: left;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+            color: #666;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <h1 class="app-title"><i class="fas fa-comments"></i> أجب على أسئلتي!</h1>
+            <p class="app-description">شارك أفكارك وإجاباتك مع الآخرين</p>
+            <input type="text" 
+                   class="question-input" 
+                   id="questionInput" 
+                   placeholder="اكتب سؤالك هنا..."
+                   value="ماذا تريد أن تسألني؟">
+        </div>
+
+        <div class="answers-grid" id="answersGrid"></div>
+
+        <div class="input-container">
+            <textarea 
+                id="answerInput" 
+                placeholder="اكتب إجابتك هنا..."
+                rows="4"></textarea>
+            <div class="char-count" id="charCount">0 حرف</div>
+            <button class="btn btn-primary" onclick="submitAnswer()">
+                <i class="fas fa-paper-plane"></i>
+                إرسال الإجابة
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = localStorage.getItem('currentQuestion') || "ماذا تريد أن تسألني؟";
+        let answers = JSON.parse(localStorage.getItem('answers')) || [];
+        let editingIndex = -1;
+
+        const questionInput = document.getElementById('questionInput');
+        const answersGrid = document.getElementById('answersGrid');
+        const answerInput = document.getElementById('answerInput');
+        const charCount = document.getElementById('charCount');
+
+        // Load initial data
+        questionInput.value = currentQuestion;
+        renderAnswers();
+
+        // Event listeners
+        questionInput.addEventListener('change', updateQuestion);
+        answerInput.addEventListener('input', updateCharCount);
+        answerInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitAnswer();
+            }
+        });
+
+        function updateCharCount() {
+            const count = answerInput.value.length;
+            charCount.textContent = count + ' حرف';
+        }
+
+        function updateQuestion() {
+            currentQuestion = questionInput.value;
+            localStorage.setItem('currentQuestion', currentQuestion);
+        }
+
+        function editAnswer(index) {
+            editingIndex = index;
+            const answer = answers[index];
+            answerInput.value = answer.text;
+            answerInput.focus();
+            document.querySelector('.btn-primary').innerHTML = '<i class="fas fa-check"></i> تحديث الإجابة';
+        }
+
+        function deleteAnswer(index) {
+            if (confirm('هل أنت متأكد من حذف هذه الإجابة؟')) {
+                answers.splice(index, 1);
+                localStorage.setItem('answers', JSON.stringify(answers));
+                renderAnswers();
+            }
+        }
+
+        function submitAnswer() {
+            const answerText = answerInput.value.trim();
+            
+            if (!answerText) {
+                return;
+            }
+
+            if (editingIndex >= 0) {
+                answers[editingIndex].text = answerText;
+                answers[editingIndex].editedAt = new Date().toLocaleString('ar-EG');
+                editingIndex = -1;
+                document.querySelector('.btn-primary').innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الإجابة';
+            } else {
+                answers.push({
+                    text: answerText,
+                    date: new Date().toLocaleString('ar-EG'),
+                    editedAt: null
+                });
+            }
+            
+            localStorage.setItem('answers', JSON.stringify(answers));
+            answerInput.value = '';
+            updateCharCount();
+            renderAnswers();
+        }
+
+        function renderAnswers() {
+            answersGrid.innerHTML = '';
+            
+            if (answers.length === 0) {
+                answersGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <p>لا توجد إجابات بعد. كن أول من يشارك!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            answers.forEach((answer, index) => {
+                const card = document.createElement('div');
+                card.className = 'answer-card';
+                card.innerHTML = `
+                    <div class="answer-content">
+                        <p>${answer.text}</p>
+                    </div>
+                    <div class="answer-meta">
+                        <div class="answer-date">
+                            <i class="far fa-clock"></i> ${answer.date}
+                            ${answer.editedAt ? `<br><i class="fas fa-edit"></i> تم التعديل: ${answer.editedAt}` : ''}
+                        </div>
+                        <div class="answer-actions">
+                            <button class="btn btn-edit" onclick="editAnswer(${index})">
+                                <i class="fas fa-edit"></i>
+                                تعديل
+                            </button>
+                            <button class="btn btn-delete" onclick="deleteAnswer(${index})">
+                                <i class="fas fa-trash"></i>
+                                حذف
+                            </button>
+                        </div>
+                    </div>
+                `;
+                answersGrid.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
