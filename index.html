@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* الستايل الموجود نفسه بدون تغيير */
         :root {
             --primary: #4267B2;
             --primary-light: #5c7ccd;
@@ -259,23 +260,45 @@
         </div>
     </div>
 
-    <script>
-        let currentQuestion = localStorage.getItem('currentQuestion') || "ماذا تريد أن تسألني؟";
-        let answers = JSON.parse(localStorage.getItem('answers')) || [];
-        let editingIndex = -1;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_TcRVp3K5ivpaju-hivh4krLqVcq_vfQ",
+            authDomain: "saysmth-eace8.firebaseapp.com",
+            databaseURL: "https://saysmth-eace8-default-rtdb.firebaseio.com",
+            projectId: "saysmth-eace8",
+            storageBucket: "saysmth-eace8.firebasestorage.app",
+            messagingSenderId: "745434939752",
+            appId: "1:745434939752:web:cf8ff8a182fb71d1d1d6dd",
+            measurementId: "G-HYW5CJEFND"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // المتغيرات العامة
+        let editingKey = null;
         const questionInput = document.getElementById('questionInput');
         const answersGrid = document.getElementById('answersGrid');
         const answerInput = document.getElementById('answerInput');
         const charCount = document.getElementById('charCount');
 
-        // Load initial data
-        questionInput.value = currentQuestion;
-        renderAnswers();
+        // حفظ السؤال في Firebase
+        questionInput.addEventListener('change', () => {
+            const questionRef = ref(database, 'currentQuestion');
+            set(questionRef, questionInput.value);
+        });
 
-        // Event listeners
-        questionInput.addEventListener('change', updateQuestion);
-        answerInput.addEventListener('input', updateCharCount);
+        // تحديث عداد الأحرف
+        answerInput.addEventListener('input', () => {
+            charCount.textContent = `${answerInput.value.length} حرف`;
+        });
+
+        // استمع للضغط على Enter
         answerInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -283,62 +306,60 @@
             }
         });
 
-        function updateCharCount() {
-            const count = answerInput.value.length;
-            charCount.textContent = count + ' حرف';
-        }
-
-        function updateQuestion() {
-            currentQuestion = questionInput.value;
-            localStorage.setItem('currentQuestion', currentQuestion);
-        }
-
-        function editAnswer(index) {
-            editingIndex = index;
-            const answer = answers[index];
-            answerInput.value = answer.text;
-            answerInput.focus();
-            document.querySelector('.btn-primary').innerHTML = '<i class="fas fa-check"></i> تحديث الإجابة';
-        }
-
-        function deleteAnswer(index) {
-            if (confirm('هل أنت متأكد من حذف هذه الإجابة؟')) {
-                answers.splice(index, 1);
-                localStorage.setItem('answers', JSON.stringify(answers));
-                renderAnswers();
-            }
-        }
-
-        function submitAnswer() {
+        // دالة إرسال الإجابة
+        window.submitAnswer = async function() {
             const answerText = answerInput.value.trim();
-            
-            if (!answerText) {
-                return;
-            }
+            if (!answerText) return;
 
-            if (editingIndex >= 0) {
-                answers[editingIndex].text = answerText;
-                answers[editingIndex].editedAt = new Date().toLocaleString('ar-EG');
-                editingIndex = -1;
+            if (editingKey) {
+                // تحديث إجابة موجودة
+                const answerRef = ref(database, `answers/${editingKey}`);
+                await update(answerRef, {
+                    text: answerText,
+                    editedAt: new Date().toISOString()
+                });
+                editingKey = null;
                 document.querySelector('.btn-primary').innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الإجابة';
             } else {
-                answers.push({
+                // إضافة إجابة جديدة
+                const answersRef = ref(database, 'answers');
+                await push(answersRef, {
                     text: answerText,
-                    date: new Date().toLocaleString('ar-EG'),
+                    date: new Date().toISOString(),
                     editedAt: null
                 });
             }
-            
-            localStorage.setItem('answers', JSON.stringify(answers));
-            answerInput.value = '';
-            updateCharCount();
-            renderAnswers();
-        }
 
-        function renderAnswers() {
+            answerInput.value = '';
+            charCount.textContent = '0 حرف';
+        };
+
+        // دالة تحرير الإجابة
+        window.editAnswer = function(key) {
+            editingKey = key;
+            const answerRef = ref(database, `answers/${key}`);
+            get(answerRef).then((snapshot) => {
+                const answer = snapshot.val();
+                answerInput.value = answer.text;
+                answerInput.focus();
+                document.querySelector('.btn-primary').innerHTML = '<i class="fas fa-check"></i> تحديث الإجابة';
+            });
+        };
+
+        // دالة حذف الإجابة
+        window.deleteAnswer = function(key) {
+            if (confirm('هل أنت متأكد من حذف هذه الإجابة؟')) {
+                const answerRef = ref(database, `answers/${key}`);
+                remove(answerRef);
+            }
+        };
+
+        // مراقبة التغييرات في الإجابات
+        const answersRef = ref(database, 'answers');
+        onValue(answersRef, (snapshot) => {
             answersGrid.innerHTML = '';
             
-            if (answers.length === 0) {
+            if (!snapshot.exists()) {
                 answersGrid.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-comments"></i>
@@ -348,7 +369,9 @@
                 return;
             }
 
-            answers.forEach((answer, index) => {
+            snapshot.forEach((childSnapshot) => {
+                const key = childSnapshot.key;
+                const answer = childSnapshot.val();
                 const card = document.createElement('div');
                 card.className = 'answer-card';
                 card.innerHTML = `
@@ -357,15 +380,15 @@
                     </div>
                     <div class="answer-meta">
                         <div class="answer-date">
-                            <i class="far fa-clock"></i> ${answer.date}
-                            ${answer.editedAt ? `<br><i class="fas fa-edit"></i> تم التعديل: ${answer.editedAt}` : ''}
+                            <i class="far fa-clock"></i> ${new Date(answer.date).toLocaleString('ar-EG')}
+                            ${answer.editedAt ? `<br><i class="fas fa-edit"></i> تم التعديل: ${new Date(answer.editedAt).toLocaleString('ar-EG')}` : ''}
                         </div>
                         <div class="answer-actions">
-                            <button class="btn btn-edit" onclick="editAnswer(${index})">
+                            <button class="btn btn-edit" onclick="editAnswer('${key}')">
                                 <i class="fas fa-edit"></i>
                                 تعديل
                             </button>
-                            <button class="btn btn-delete" onclick="deleteAnswer(${index})">
+                            <button class="btn btn-delete" onclick="deleteAnswer('${key}')">
                                 <i class="fas fa-trash"></i>
                                 حذف
                             </button>
@@ -374,7 +397,15 @@
                 `;
                 answersGrid.appendChild(card);
             });
-        }
+        });
+
+        // مراقبة التغييرات في السؤال الحالي
+        const questionRef = ref(database, 'currentQuestion');
+        onValue(questionRef, (snapshot) => {
+            if (snapshot.exists()) {
+                questionInput.value = snapshot.val();
+            }
+        });
     </script>
 </body>
 </html>
